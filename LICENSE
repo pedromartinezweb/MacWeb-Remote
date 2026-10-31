@@ -1,0 +1,89 @@
+MacWeb Remote Personal Use and Commercial License 1.0
+
+Copyright (c) 2026 Pedro Martinez. All rights reserved except as expressly
+provided below.
+
+Licensor: Pedro Martinez
+Commercial licensing contact: legal@pedromartinezweb.com
+
+1. Scope
+
+This license applies to the original MacWeb Remote source code, binaries,
+documentation and assets supplied by the Licensor (the "Software"). It does
+not replace the licenses of third-party components; see Section 6.
+
+2. Free personal-use permission
+
+Subject to this license, an individual may download, install, run, study,
+copy and modify the Software, without a license fee, solely for that
+individual's private, personal, non-commercial and non-professional purposes.
+This includes use on the individual's personal devices and private network.
+
+An individual may share original or modified copies without payment or other
+commercial benefit, provided that this license and all applicable copyright
+and third-party notices accompany every copy, modifications are clearly
+identified, and recipients receive the Software only under these same terms.
+No right to grant commercial rights or to remove these restrictions is given.
+
+3. Business, professional and commercial use
+
+A separate, prior written agreement with the Licensor is required for any
+business, enterprise, professional or commercial use of the Software,
+including:
+
+- use by or on behalf of a company or other organization in its operations;
+- use in employment, self-employment, consulting or services for clients;
+- deployment for internal business access, administration or support;
+- inclusion in, or provision as part of, a commercial product or service;
+- hosting, managed access, paid support or other exploitation of the
+  Software for commercial benefit.
+
+These requirements also apply to modified versions and apply even when the
+Software itself is provided without a separate charge or no profit is made.
+Personal use does not include work or business use merely because it occurs
+on a personally owned device or outside working hours.
+
+4. Resale and commercial distribution
+
+Selling, reselling, sublicensing for commercial purposes, bundling for sale,
+or distributing the Software for a fee or other commercial benefit requires
+a separate, prior written agreement with the Licensor. This applies to both
+original and modified versions.
+
+To request permission or negotiate terms, contact:
+
+    legal@pedromartinezweb.com
+
+Sending an inquiry, receiving the Software, or accessing this public
+repository does not itself authorize a use covered by Sections 3 or 4.
+Commercial permission exists only when expressly granted by the Licensor
+in a written agreement.
+
+5. Retained rights and compliance
+
+All rights not expressly granted are reserved. No trademark rights are
+granted. You must preserve this license and applicable notices in copies
+and must not represent a modified version as an official Licensor release.
+
+The permissions in this license terminate if you materially breach its
+terms. Upon termination, stop the unauthorized use and distribution.
+Nothing in this license limits rights or exceptions that applicable law
+does not permit the Licensor to restrict.
+
+6. Third-party components
+
+Third-party software and materials remain governed exclusively by their
+respective licenses and notices. This license does not restrict rights
+independently granted by those licenses. See THIRD_PARTY_NOTICES.md and
+ThirdPartyLicenses/ for the applicable terms. The commercial-use restrictions
+above apply to the Licensor's Software, not independently licensed
+third-party components used separately.
+
+7. Warranty and liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE SOFTWARE IS PROVIDED
+"AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+THE LICENSOR IS NOT LIABLE FOR CLAIMS, DAMAGES OR OTHER LIABILITY ARISING
+FROM THE SOFTWARE OR ITS USE, WHETHER IN CONTRACT, TORT OR OTHERWISE.
+THIS EXCLUSION DOES NOT APPLY TO LIABILITY THAT CANNOT LAWFULLY BE EXCLUDED.

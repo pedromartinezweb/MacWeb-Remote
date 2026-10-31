@@ -9,6 +9,8 @@ bin_path="$(swift build --configuration "$configuration" --scratch-path "$build_
 mkdir -p "$app_bundle/Contents/MacOS" "$app_bundle/Contents/Resources" "$build_root/AppIcon.iconset"
 cp "$bin_path/MacWebRemote" "$app_bundle/Contents/MacOS/MacWebRemote"
 cp Info.plist "$app_bundle/Contents/Info.plist"
+cp LICENSE "$app_bundle/Contents/Resources/LICENSE.txt"
+cp THIRD_PARTY_NOTICES.md "$app_bundle/Contents/Resources/THIRD_PARTY_NOTICES.md"
 ditto --norsrc --noextattr ThirdPartyLicenses "$app_bundle/Contents/Resources/ThirdPartyLicenses"
 ditto --norsrc --noextattr Web "$app_bundle/Contents/Resources/Web"
 for size in 16 32 128 256 512; do

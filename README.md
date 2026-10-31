@@ -98,3 +98,11 @@ Credentials, generated certificates, private keys, public-credential databases, 
 WebAuthn verification uses [Swift WebAuthn](https://github.com/brokenhandsio/swift-webauthn), pinned to a specific revision. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for dependency licenses.
 
 The generated icon master is `Assets/AppIcon.png`. [Assets/README.md](Assets/README.md) records its design and generation process.
+
+## License
+
+MacWeb Remote is **free for private, personal, non-commercial use** under the [MacWeb Remote Personal Use and Commercial License 1.0](LICENSE).
+
+**Business or professional use, commercial use, and resale require a separate prior written agreement with Pedro Martinez.** This includes internal company deployments and commercial products or services based on modified versions. Contact [legal@pedromartinezweb.com](mailto:legal@pedromartinezweb.com) to discuss terms.
+
+The source is publicly available under a custom license; this is not an OSI-approved open-source license. Third-party dependencies retain their own licenses, listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
