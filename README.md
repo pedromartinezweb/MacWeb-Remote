@@ -27,6 +27,8 @@ Requires macOS 15 or later and Xcode 26 with Swift 6.2 or later. Dependencies ar
 open "$HOME/Library/Caches/MacWebRemote-build/MacWebRemote.app"
 ```
 
+The dashboard shows the app version and build number from its bundle metadata. GitHub Actions uses its run number as the build number; local builds use `CFBundleVersion` from `Info.plist` unless `MACWEB_BUILD_NUMBER` is set.
+
 Build output stays outside the repository. Override `MACWEB_BUILD_ROOT` to choose another directory or set `MACWEB_CONFIGURATION=debug` for development.
 
 Set `MACWEB_SIGNING_IDENTITY` to an existing Apple development or distribution signing identity for consistent app identity across builds. The default is an ad-hoc development signature, not a notarized distribution. Replacing an ad-hoc signed executable can invalidate macOS privacy grants even when Settings still shows its switch enabled. No signing certificates are created or installed by the build.

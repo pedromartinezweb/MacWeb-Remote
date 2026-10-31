@@ -42,6 +42,11 @@ struct DashboardView: View {
     @ObservedObject var model: DashboardModel
     @State private var settingsOpen = false
     @State private var showRecovery = false
+    private var buildDescription: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
+        return "Version \(version) · Build \(build)"
+    }
     private let accent = Color(red: 0.34, green: 0.64, blue: 0.49)
 
     var body: some View {
@@ -56,6 +61,7 @@ struct DashboardView: View {
                 Button { settingsOpen = true } label: { Image(systemName: "gearshape").font(.system(size: 17)) }
                     .buttonStyle(.plain).help("Settings")
             }
+            Text(buildDescription).font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary).textSelection(.enabled)
             Divider()
             HStack(alignment: .center, spacing: 32) {
                 VStack(alignment: .leading, spacing: 17) {

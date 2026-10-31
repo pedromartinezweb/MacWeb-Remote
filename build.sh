@@ -3,12 +3,20 @@ set -euo pipefail
 cd "${0:A:h}"
 build_root="${MACWEB_BUILD_ROOT:-$HOME/Library/Caches/MacWebRemote-build}"
 configuration="${MACWEB_CONFIGURATION:-release}"
+build_number="${MACWEB_BUILD_NUMBER:-}"
+if [[ -n "$build_number" && ! "$build_number" =~ ^[0-9]+$ ]]; then
+    print -u2 "MACWEB_BUILD_NUMBER must be a non-negative integer."
+    exit 1
+fi
 app_bundle="$build_root/MacWebRemote.app"
 swift build --configuration "$configuration" --scratch-path "$build_root/SwiftPM" -j 4
 bin_path="$(swift build --configuration "$configuration" --scratch-path "$build_root/SwiftPM" --show-bin-path)"
 mkdir -p "$app_bundle/Contents/MacOS" "$app_bundle/Contents/Resources" "$build_root/AppIcon.iconset"
 cp "$bin_path/MacWebRemote" "$app_bundle/Contents/MacOS/MacWebRemote"
 cp Info.plist "$app_bundle/Contents/Info.plist"
+if [[ -n "$build_number" ]]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $build_number" "$app_bundle/Contents/Info.plist"
+fi
 cp LICENSE "$app_bundle/Contents/Resources/LICENSE.txt"
 cp THIRD_PARTY_NOTICES.md "$app_bundle/Contents/Resources/THIRD_PARTY_NOTICES.md"
 ditto --norsrc --noextattr ThirdPartyLicenses "$app_bundle/Contents/Resources/ThirdPartyLicenses"

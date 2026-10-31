@@ -24,6 +24,7 @@ jobs:
       - name: Verify toolchain and architecture
         run: |
           echo "MACWEB_BUILD_ROOT=$RUNNER_TEMP/MacWebRemote" >> "$GITHUB_ENV"
+          echo "MACWEB_BUILD_NUMBER=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
           test "$(uname -m)" = arm64
           swift --version
           xcodebuild -version
