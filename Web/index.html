@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#191b1d">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/style.css">
+<link rel="icon" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
+<title>MacWeb Remote</title>
+<script src="/passkeys.js" defer></script>
+<script src="/app.js" defer></script>
+</head>
+<body>
+<section id="login" class="login">
+<div class="loginPanel">
+<img class="appIcon" src="/icon.png" width="72" height="72" alt="">
+<h1>MacWeb Remote</h1>
+<p class="intro">Your desktop, from any browser.</p>
+<button id="passkeyLogin" class="primary" type="button">Sign in with passkey</button>
+<p id="passkeyHint" class="hint" role="status"></p>
+<details id="recovery"><summary>First-time access or recovery</summary>
+<form id="loginForm">
+<label for="token">Access code</label>
+<input id="token" name="password" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" required>
+<button type="submit">Sign in with code</button>
+<p class="hint">Find the code and QR code in the Mac app. After signing in, you can create a passkey.</p>
+</form>
+</details>
+<p id="loginError" role="alert"></p>
+<div class="connectionFootnote">Private, encrypted connection</div>
+</div>
+</section>
+<main id="remote" hidden>
+<header>
+<strong>MacWeb</strong>
+<span id="connection" role="status">Connecting…</span>
+<button id="settingsButton" aria-label="Connection options">Options</button>
+</header>
+<div id="notice" role="alert" hidden></div>
+<section id="viewport" aria-label="Mac desktop">
+<div id="stage">
+<img id="screen" alt="Remote Mac desktop" draggable="false">
+<div id="pointer" aria-hidden="true"></div>
+</div>
+<div id="waiting">Waiting for the Mac screen…</div>
+</section>
+<div id="gestureHelp">One finger to move · tap to click · two fingers to scroll · hold to drag</div>
+<nav id="toolbar" aria-label="Desktop controls">
+<button id="mode" aria-pressed="false">Trackpad</button>
+<button id="keyboard" aria-label="Toggle keyboard">Keyboard</button>
+<button data-key="Escape">Esc</button>
+<button data-key="Tab">Tab</button>
+<button data-key="Enter">↵</button>
+<button id="rightClick" aria-label="Right click">Right click</button>
+<button id="drag" aria-pressed="false">Drag</button>
+</nav>
+<nav id="keybar" aria-label="Keys and shortcuts">
+<button data-mod="meta" aria-pressed="false">⌘</button>
+<button data-mod="ctrl" aria-pressed="false">Ctrl</button>
+<button data-mod="alt" aria-pressed="false">⌥</button>
+<button data-mod="shift" aria-pressed="false">⇧</button>
+<button data-key="ArrowLeft" aria-label="Left">←</button>
+<button data-key="ArrowUp" aria-label="Up">↑</button>
+<button data-key="ArrowDown" aria-label="Down">↓</button>
+<button data-key="ArrowRight" aria-label="Right">→</button>
+<button data-key="Backspace" aria-label="Delete">⌫</button>
+</nav>
+<textarea id="keyboardInput" aria-label="Type on the Mac" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"></textarea>
+</main>
+<dialog id="settings">
+<form method="dialog" class="dialogHeader"><h2>Connection</h2><button aria-label="Close options">Close</button></form>
+<label for="display">Display</label><select id="display"></select>
+<label for="quality">Quality</label><select id="quality"><option value="low">Save data</option><option value="balanced" selected>Balanced</option><option value="high">Sharp text</option></select>
+<button id="virtual">Create and use virtual display</button>
+<button id="monitors">Turn off Mac displays</button>
+<p class="hint">Use the virtual display while physical displays are off. Displays are restored when the app quits or the browser stops responding for 30 seconds.</p>
+<button id="reconnect">Reconnect video</button>
+<section class="passkeySettings">
+<h3>Passkeys</h3>
+<label for="passkeyName">Passkey name</label>
+<input id="passkeyName" value="My passkey" maxlength="64">
+<button id="registerPasskey">Create passkey</button>
+<p id="registrationHint" class="hint"></p>
+<ul id="passkeyList"></ul>
+</section>
+<button id="logout">Sign out</button>
+<p id="details" class="hint"></p>
+</dialog>
+</body>
+</html>

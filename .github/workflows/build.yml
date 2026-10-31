@@ -1,0 +1,52 @@
+name: Build macOS app
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Verify toolchain and architecture
+        run: |
+          echo "MACWEB_BUILD_ROOT=$RUNNER_TEMP/MacWebRemote" >> "$GITHUB_ENV"
+          test "$(uname -m)" = arm64
+          swift --version
+          xcodebuild -version
+      - name: Test authentication and browser input
+        run: |
+          swift test --scratch-path "$RUNNER_TEMP/SwiftTests" -j 4
+          node --check Web/app.js
+          node --check Web/passkeys.js
+          node --test tests/*-client.test.cjs
+      - name: Build and verify app
+        run: |
+          ./build.sh
+          codesign --verify --deep --strict "$MACWEB_BUILD_ROOT/MacWebRemote.app"
+          test "$(lipo -archs "$MACWEB_BUILD_ROOT/MacWebRemote.app/Contents/MacOS/MacWebRemote")" = arm64
+      - name: Package app and checksum
+        run: |
+          mkdir -p "$RUNNER_TEMP/Release"
+          ditto -c -k --keepParent "$MACWEB_BUILD_ROOT/MacWebRemote.app" "$RUNNER_TEMP/Release/MacWebRemote-macOS-arm64.zip"
+          cd "$RUNNER_TEMP/Release"
+          shasum -a 256 MacWebRemote-macOS-arm64.zip > SHA256SUMS.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: MacWebRemote-macOS-arm64
+          path: ${{ runner.temp }}/Release/*
+          if-no-files-found: error
+          retention-days: 30
