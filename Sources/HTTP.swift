@@ -31,7 +31,7 @@ final class HTTPServer {
     func start(address: String, port: UInt16, p12: Data, password: String) throws {
         guard let listenAddress = IPv4Address(address), port > 0 else { throw NSError(domain: "Network", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid address or port."]) }
         var imported: CFArray?
-        let result = SecPKCS12Import(p12 as CFData, [kSecImportExportPassphrase as String: password] as CFDictionary, &imported)
+        let result = SecPKCS12Import(p12 as CFData, [kSecImportExportPassphrase as String: password, kSecImportToMemoryOnly as String: true] as CFDictionary, &imported)
         guard result == errSecSuccess, let items = imported as? [[String: Any]], let value = items.first?[kSecImportItemIdentity as String] else {
             throw NSError(domain: "TLS", code: Int(result), userInfo: [NSLocalizedDescriptionKey:"Could not load the HTTPS certificate."])
         }
@@ -39,7 +39,9 @@ final class HTTPServer {
         let tls = NWProtocolTLS.Options()
         sec_protocol_options_set_local_identity(tls.securityProtocolOptions, sec_identity_create(identity)!)
         sec_protocol_options_set_min_tls_protocol_version(tls.securityProtocolOptions, .TLSv12)
-        let parameters = NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
+        let tcp = NWProtocolTCP.Options()
+        tcp.noDelay = true
+        let parameters = NWParameters(tls: tls, tcp: tcp)
         parameters.allowLocalEndpointReuse = true
         parameters.requiredLocalEndpoint = .hostPort(host: .ipv4(listenAddress), port: NWEndpoint.Port(rawValue: port)!)
         let next = try NWListener(using: parameters)
@@ -86,6 +88,8 @@ private final class HTTPPeer {
     var isStreaming: Bool { streaming }
     private var expiresAt = Date.distantFuture
     private var responding = false
+    private var keepAlive = false
+    private var requestGeneration: UInt64 = 0
     private var revision: UInt64 = 0
     init(connection: NWConnection, queue: DispatchQueue, frames: FrameStore) {
         self.connection = connection; self.queue = queue; self.frames = frames
@@ -94,15 +98,28 @@ private final class HTTPPeer {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
             switch state {
-            case .ready: self.read()
+            case .ready: self.beginRequest()
             case .failed, .cancelled: self.end()
             default: break
             }
         }
         connection.start(queue: queue)
         queue.asyncAfter(deadline: .now() + 8) { [weak self] in
-            if let self, !self.streaming { self.end() }
+            guard let self, self.requestGeneration == 0 else { return }
+            self.end()
         }
+    }
+    private func beginRequest() {
+        guard !ended else { return }
+        requestGeneration &+= 1
+        let generation = requestGeneration
+        responding = false
+        keepAlive = false
+        queue.asyncAfter(deadline: .now() + 8) { [weak self] in
+            guard let self, self.requestGeneration == generation, !self.streaming else { return }
+            self.end()
+        }
+        if !parse() { read() }
     }
     func end() {
         guard !ended else { return }
@@ -126,15 +143,15 @@ private final class HTTPPeer {
         guard split.lowerBound <= 8192, let text = String(data: buffer[..<split.lowerBound], encoding: .utf8) else { respond(.json(["error":"Invalid header"], status:400)); return true }
         let lines = text.components(separatedBy: "\r\n")
         let requestLine = lines[0].split(separator: " ")
-        guard requestLine.count == 3 else { respond(.json(["error":"Invalid request"], status:400)); return true }
+        guard requestLine.count == 3, ["HTTP/1.1", "HTTP/1.0"].contains(String(requestLine[2])) else { respond(.json(["error":"Invalid request"], status:400)); return true }
         var headers: [String: String] = [:]
         for line in lines.dropFirst() {
             guard let colon = line.firstIndex(of: ":") else { respond(.json(["error":"Invalid header"], status:400)); return true }
             let name = line[..<colon].lowercased()
-            guard headers[name] == nil else { respond(.json(["error":"Cabecera duplicada"], status:400)); return true }
+            guard headers[name] == nil else { respond(.json(["error":"Duplicate header"], status:400)); return true }
             headers[name] = line[line.index(after: colon)...].trimmingCharacters(in: .whitespaces)
         }
-        guard headers["transfer-encoding"] == nil else { respond(.json(["error":"Transferencia no admitida"], status:400)); return true }
+        guard headers["transfer-encoding"] == nil else { respond(.json(["error":"Transfer encoding is not supported"], status:400)); return true }
         let length: Int
         if let declared = headers["content-length"] {
             guard let count = Int(declared), count >= 0, count <= 49152 else { respond(.json(["error":"Invalid length"], status:413)); return true }
@@ -142,6 +159,9 @@ private final class HTTPPeer {
         } else { length = 0 }
         guard buffer.count - split.upperBound >= length else { return false }
         let request = Request(method: String(requestLine[0]), path: String(requestLine[1]), headers: headers, body: buffer.subdata(in: split.upperBound..<(split.upperBound + length)))
+        buffer.removeSubrange(..<(split.upperBound + length))
+        let connectionTokens = (headers["connection"] ?? "").lowercased().split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        keepAlive = requestLine[2] == "HTTP/1.1" && !connectionTokens.contains("close")
         handle?(request) { [weak self] response in
             guard let self else { return }
             self.queue.async { self.respond(response) }
@@ -162,8 +182,14 @@ private final class HTTPPeer {
                 if error != nil { self.end() } else { self.sendFrame() }
             })
         } else {
-            header += "Content-Length: \(response.body.count)\r\nConnection: close\r\n\r\n"
-            connection.send(content: Data(header.utf8) + response.body, completion: .contentProcessed { [weak self] _ in self?.end() })
+            if response.status != 204 { header += "Content-Length: \(response.body.count)\r\n" }
+            header += "Connection: \(keepAlive ? "keep-alive" : "close")\r\n\r\n"
+            let body = response.status == 204 ? Data() : response.body
+            connection.send(content: Data(header.utf8) + body, completion: .contentProcessed { [weak self] error in
+                guard let self else { return }
+                if error != nil || !self.keepAlive { self.end() }
+                else { self.beginRequest() }
+            })
         }
     }
     private func sendFrame() {

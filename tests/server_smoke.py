@@ -41,7 +41,7 @@ class ServerSmoke(unittest.TestCase):
         cls.cookie = headers['Set-Cookie'].split(';')[0]
 
     def test_static_and_protected_routes(self):
-        for path in ['/', '/app.js', '/passkeys.js', '/style.css', '/manifest.webmanifest', '/icon.png']:
+        for path in ['/', '/app.js', '/transport.js', '/passkeys.js', '/style.css', '/manifest.webmanifest', '/icon.png']:
             self.assertEqual(request('GET', path)[0], 200)
         for path in ['/api/status', '/api/frame', '/api/stream', '/api/passkeys/list']:
             self.assertEqual(request('GET', path)[0], 401)

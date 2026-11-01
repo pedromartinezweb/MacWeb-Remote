@@ -21,7 +21,7 @@ function client(desktop = true) {
     setInterval:()=>0, clearInterval() {}, setTimeout:()=>0, clearTimeout() {},
     location: {hash:'', pathname:'/'}, history: {replaceState() {}},
     fetch: async()=>({ok:true, json:async()=>({availableHere:false})}),
-    Passkeys: {available:()=>false}, Option:class {}, sent:[],
+    InputSender:class {enqueue() {} reset() {}},FramePlayer:class {start() {} stop() {}},Passkeys: {available:()=>false}, Option:class {}, sent:[],
   });
   vm.runInContext(fs.readFileSync('Web/app.js','utf8'),context);
   vm.runInContext('connected = true; command = value => sent.push(value);',context);

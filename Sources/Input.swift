@@ -12,6 +12,20 @@ final class RemoteInput {
         }
         heldButtons.removeAll()
     }
+    func applyRequest(_ value: [String: Any], displayID: CGDirectDisplayID) throws -> Int {
+        let events: [[String: Any]]
+        if let batch = value["events"] {
+            guard let parsed = batch as? [[String: Any]], !parsed.isEmpty, parsed.count <= 64 else { throw InputError.invalid }
+            events = parsed
+        } else { events = [value] }
+        do {
+            for event in events { try apply(event, displayID: displayID) }
+            return events.count
+        } catch {
+            releaseAll()
+            throw error
+        }
+    }
     func apply(_ value: [String: Any], displayID: CGDirectDisplayID) throws {
         guard AXIsProcessTrusted() else { throw InputError.permission }
         guard let type = value["type"] as? String else { throw InputError.invalid }

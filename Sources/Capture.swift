@@ -51,9 +51,9 @@ final class ScreenCapture: NSObject, SCStreamOutput, SCStreamDelegate {
         let scale = min(1.0, 1600.0 / Double(display.width))
         configuration.width = Int(Double(display.width) * scale)
         configuration.height = Int(Double(display.height) * scale)
-        configuration.minimumFrameInterval = CMTime(value: 1, timescale: 15)
+        configuration.minimumFrameInterval = CMTime(value: 1, timescale: 30)
         configuration.queueDepth = 3
-        configuration.showsCursor = true
+        configuration.showsCursor = false
         configuration.pixelFormat = kCVPixelFormatType_32BGRA
         configuration.capturesAudio = false
         let next = SCStream(filter: SCContentFilter(display: display, excludingWindows: []), configuration: configuration, delegate: self)

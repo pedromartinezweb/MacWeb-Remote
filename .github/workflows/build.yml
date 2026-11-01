@@ -31,6 +31,7 @@ jobs:
       - name: Test authentication and browser input
         run: |
           swift test --scratch-path "$RUNNER_TEMP/SwiftTests" -j 4
+          node --check Web/transport.js
           node --check Web/app.js
           node --check Web/passkeys.js
           node --test tests/*-client.test.cjs

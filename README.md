@@ -9,7 +9,7 @@ Control a Mac desktop from any browser. A native macOS app with an embedded HTTP
 - Passkeys with required user verification, single-use challenges, recent authorization for enrollment and revocation, and persistent public credentials.
 - Per-installation recovery code; no credentials or network addresses embedded in the source.
 - Configurable DNS name, IPv4 listen address and HTTPS port.
-- ScreenCaptureKit video through MJPEG at up to 15 fps, with mouse, touch and keyboard input.
+- ScreenCaptureKit video with latest-frame JPEG delivery over persistent HTTPS at up to 30 fps, with mouse, touch and keyboard input.
 - Virtual display and automatic physical-display restoration when browser heartbeats stop.
 
 ## Download a build
@@ -87,7 +87,10 @@ node --check Web/passkeys.js
 node --test tests/*-client.test.cjs
 python3 tests/server_smoke.py
 python3 tests/capture_smoke.py
+python3 tests/transport_smoke.py
 ```
+
+The browser downloads and decodes one frame at a time, avoiding an accumulating MJPEG playback buffer. Unchanged frames return an empty response. Input commands are grouped into ordered, size-bounded batches, and stale adjacent pointer moves are replaced before sending. Both video and control reuse TLS connections. JPEG remains bandwidth-intensive compared with an inter-frame video codec; actual responsiveness depends on capture, network and browser performance.
 
 The HTTPS smoke tests require the installed server and its local runtime configuration. Authentication tests use real P-256 signatures and check persistence, revocation, expiry, origin/RP binding, invalid signatures, iframe contexts and user verification. Client codec tests exercise browser payload conversion with test doubles. These tests do not establish physical-device biometrics or iCloud sync behavior.
 

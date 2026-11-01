@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 let authConfig = null;
 let connected = false, state = null, mode = 'trackpad', dragging = false, cursor = {x:.5,y:.5};
-let commands = [], sending = false, lastTap = 0, keyboardOpen = false, statusTimer, heartbeatTimer;
+let lastTap = 0, keyboardOpen = false, statusTimer, heartbeatTimer;
 const modifiers = new Set(), touches = new Map();
 let gesture = null, holdTimer = null;
 const desktopInput = window.matchMedia('(pointer: fine) and (hover: hover)');
@@ -28,18 +28,13 @@ async function api(path, value) {
   }
   return result;
 }
+const inputSender = new InputSender(value => api('input',value), () => connected, error => notice(error.message));
+const framePlayer = new FramePlayer($('screen'), error => {
+  if(error.status === 401) disconnect();
+  else notice(error.message);
+});
 function command(value) {
-  value.modifiers=[...modifiers];
-  if(value.type==='move' && commands.at(-1)?.type==='move') commands[commands.length-1]=value;
-  else if(commands.length<80) commands.push(value);
-  pump();
-}
-async function pump() {
-  if(sending || !commands.length || !connected) return;
-  sending=true;
-  try { while(commands.length && connected) await api('input',commands.shift()); }
-  catch(error) { commands=[]; notice(error.message); }
-  finally { sending=false; }
+  inputSender.enqueue({...value, modifiers:value.modifiers ?? [...modifiers]});
 }
 function key(key) { command({type:'key',key}); }
 function point() { return {x:cursor.x,y:cursor.y}; }
@@ -62,7 +57,7 @@ function fit() {
   $('stage').style.height=Math.floor(display.height*ratio)+'px';
 }
 function stream() {
-  $('screen').src='/api/stream?t='+Date.now();
+  framePlayer.start();
 }
 async function refresh() {
   try {
@@ -95,7 +90,7 @@ async function connect() {
   api('heartbeat',{}).catch(()=>{});
 }
 function disconnect() {
-  connected=false; commands=[];
+  connected=false; inputSender.reset(); framePlayer.stop();
   clearInterval(statusTimer); clearInterval(heartbeatTimer);
   $('screen').removeAttribute('src'); $('login').hidden=false; $('remote').hidden=true;
   $('settings').close();
@@ -161,7 +156,7 @@ window.addEventListener('keydown',event=>{
     const list=new Set(modifiers);
     if(event.metaKey)list.add('meta'); if(event.ctrlKey)list.add('ctrl'); if(event.altKey)list.add('alt'); if(event.shiftKey)list.add('shift');
     const value={type:'key',key:event.key.toLowerCase().length===1?event.key.toLowerCase():event.key,modifiers:[...list]};
-    commands.push(value); pump();
+    command(value);
   } else if(event.target!==$('keyboardInput') && event.key.length===1) {event.preventDefault();command({type:'text',text:event.key});}
 });
 const viewport=$('viewport');
@@ -217,7 +212,8 @@ window.addEventListener('resize',fit);
 new ResizeObserver(fit).observe(viewport);
 window.addEventListener('blur',()=>{if(connected){setDragging(false);command({type:'release'});}});
 document.addEventListener('visibilitychange',()=>{
-  if(connected && !document.hidden){api('heartbeat',{}).catch(()=>{});stream();refresh();}
+  if(document.hidden) framePlayer.stop();
+  else if(connected){api('heartbeat',{}).catch(()=>{});stream();refresh();}
 });
 async function restoreAuthentication(){
   await configureAuthentication();

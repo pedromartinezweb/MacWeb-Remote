@@ -174,7 +174,7 @@ import Network
         let allowedHosts = ["\(config.resolvedAddress):\(config.port)", "127.0.0.1:\(config.port)", "localhost:\(config.port)", (try? config.identity.authority) ?? ""]
         guard allowedHosts.contains(host) else { reply(.json(["error":"Host not allowed"],status:403)); return }
         if let origin = request.headers["origin"], origin != "https://\(host)" { reply(.json(["error":"Origin not allowed"],status:403)); return }
-        if request.method == "GET", ["/","/app.js","/passkeys.js","/style.css","/manifest.webmanifest","/icon.png"].contains(path) {
+        if request.method == "GET", ["/","/app.js","/transport.js","/passkeys.js","/style.css","/manifest.webmanifest","/icon.png"].contains(path) {
             let name = path == "/" ? "index.html" : String(path.dropFirst())
             guard let root = Bundle.main.resourceURL?.appendingPathComponent("Web"), let data = try? Data(contentsOf:root.appendingPathComponent(name)) else { reply(.json(["error":"Recurso ausente"],status:404)); return }
             let type = name.hasSuffix("png") ? "image/png" : name.hasSuffix("html") ? "text/html; charset=utf-8" : name.hasSuffix("js") ? "text/javascript; charset=utf-8" : name.hasSuffix("css") ? "text/css; charset=utf-8" : "application/manifest+json"
@@ -201,8 +201,14 @@ import Network
             switch path {
             case "/api/status": var value = status(); value["canRegisterPasskey"] = freshAuthorization(request); reply(.json(value))
             case "/api/frame":
-                let (data,_,_) = capture.frames.read()
-                if data.isEmpty { reply(.json(["error":"Waiting for screen recording"],status:503)) } else { reply(Response(type:"image/jpeg",body:data)) }
+                let (data,serial,_) = capture.frames.read()
+                if data.isEmpty { reply(.json(["error":"Waiting for screen recording"],status:503)) }
+                else {
+                    let after = URLComponents(string: request.path)?.queryItems?.first { $0.name == "after" }?.value
+                    let headers = ["X-Frame-Serial": String(serial)]
+                    if after == String(serial) { reply(Response(status:204, headers:headers)) }
+                    else { reply(Response(type:"image/jpeg",body:data,headers:headers)) }
+                }
             case "/api/stream": reply(Response(type:"multipart/x-mixed-replace; boundary=frame",stream:true,expiresAt:Date().addingTimeInterval(3600)))
             default: reply(.json(["error":"Not found"],status:404))
             }
@@ -212,7 +218,10 @@ import Network
         switch path {
         case "/api/heartbeat": lastHeartbeat = Date(); reply(.json(["ok":true]))
         case "/api/input":
-            do { try input.apply(request.json,displayID:capture.selectedID); reply(.json(["ok":true])) }
+            do {
+                let applied = try input.applyRequest(request.json, displayID: capture.selectedID)
+                reply(.json(["ok":true, "applied":applied]))
+            }
             catch InputError.permission { reply(.json(["error":"Enable Accessibility access on this Mac."],status:403)) }
             catch { reply(.json(["error":"Invalid input"],status:400)) }
         case "/api/display":
