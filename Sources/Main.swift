@@ -60,6 +60,7 @@ import Network
         dashboard.requestCapture = { [weak self] in self?.requestScreen() }
         dashboard.openScreenSettings = { [weak self] in self?.openScreenSettings() }
         dashboard.requestControl = { [weak self] in self?.requestInput() }
+        dashboard.removeVirtual = { [weak self] in self?.removeVirtualDisplay() }
         dashboard.createVirtual = { [weak self] in self?.createVirtual() }
         dashboard.restoreDisplays = { [weak self] in self?.restoreMonitors() }
         dashboard.configure = { [weak self] in self?.configureAccess() }
@@ -104,6 +105,50 @@ import Network
         NSWorkspace.shared.open(URL(string:"x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
     @objc func createVirtual() { Task { do { try await self.ensureVirtual() } catch { self.latestError = error.localizedDescription } } }
+    func removeVirtualDisplay() {
+        Task {
+            do { try await removeOwnedVirtualDisplay(); latestError = nil }
+            catch { latestError = error.localizedDescription }
+            tick()
+        }
+    }
+    func removeOwnedVirtualDisplay() async throws {
+        guard !operationPending else { throw NSError(domain:"Display",code:1,userInfo:[NSLocalizedDescriptionKey:"A display change is already in progress."]) }
+        let virtualID = remoteDisplay.displayID
+        guard virtualID != 0 else { return }
+        operationPending = true
+        defer { operationPending = false }
+        try remoteDisplay.restorePhysicalDisplays()
+        monitorsOffSince = nil
+        try await capture.refreshDisplays()
+        let alternatives = capture.displays.filter { $0.displayID != virtualID }
+        guard let fallback = alternatives.first(where: { $0.displayID == capture.selectedID })
+                ?? alternatives.first(where: { $0.displayID == CGMainDisplayID() }) ?? alternatives.first else {
+            throw NSError(domain:"Display",code:2,userInfo:[NSLocalizedDescriptionKey:"No other display is available. Connect or enable another display before removing the virtual display."])
+        }
+        let wasCapturingVirtual = capture.selectedID == virtualID
+        do {
+            if wasCapturingVirtual || !capture.isRunning {
+                input.releaseAll()
+                try await capture.start(displayID:fallback.displayID,quality:currentQuality)
+                let deadline = Date().addingTimeInterval(2)
+                while capture.frames.read().0.isEmpty && capture.isRunning && Date() < deadline {
+                    try await Task.sleep(nanoseconds:50_000_000)
+                }
+                guard capture.isRunning, !capture.frames.read().0.isEmpty else {
+                    throw NSError(domain:"Display",code:3,userInfo:[NSLocalizedDescriptionKey:"The replacement display did not provide an image. The virtual display has been kept."])
+                }
+            }
+            try remoteDisplay.remove()
+        } catch {
+            if wasCapturingVirtual, remoteDisplay.displayID == virtualID {
+                try? await capture.start(displayID:virtualID,quality:currentQuality)
+            }
+            throw error
+        }
+        try await Task.sleep(nanoseconds:200_000_000)
+        try await capture.refreshDisplays()
+    }
     @objc func restoreMonitors() {
         do { try remoteDisplay.restorePhysicalDisplays(); monitorsOffSince = nil; latestError = nil }
         catch { latestError = error.localizedDescription }
@@ -140,6 +185,8 @@ import Network
         dashboard.hasFrames = !capture.frames.read().0.isEmpty
         dashboard.capturing = capture.isRunning
         dashboard.control = control
+        dashboard.hasVirtualDisplay = remoteDisplay.displayID != 0
+        dashboard.displayBusy = operationPending
         dashboard.monitorsOff = !remoteDisplay.disabledDisplays.isEmpty
         dashboard.message = latestError ?? capture.error ?? "Encrypted HTTPS connection · private access"
         dashboard.passkeys = passkeyService?.list() ?? []
@@ -231,6 +278,11 @@ import Network
         case "/api/virtual":
             Task {
                 do { try await self.ensureVirtual(); self.latestError = nil; reply(.json(self.status())) }
+                catch { reply(.json(["error":error.localizedDescription],status:409)) }
+            }
+        case "/api/virtual/remove":
+            Task {
+                do { try await self.removeOwnedVirtualDisplay(); self.latestError = nil; reply(.json(self.status())) }
                 catch { reply(.json(["error":error.localizedDescription],status:409)) }
             }
         case "/api/monitors":

@@ -79,6 +79,8 @@ class ServerSmoke(unittest.TestCase):
 
     def test_cross_origin_cannot_control(self):
         self.assertEqual(request('POST', '/api/monitors', {'off': True}, {'Cookie': self.cookie, 'Origin': 'https://external.invalid'})[0], 403)
+        self.assertEqual(request('POST', '/api/virtual/remove', {})[0], 401)
+        self.assertEqual(request('POST', '/api/virtual/remove', {}, {'Cookie': self.cookie, 'Origin': 'https://external.invalid'})[0], 403)
 
 
 if __name__ == '__main__':

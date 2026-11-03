@@ -12,6 +12,8 @@ import CoreImage.CIFilterBuiltins
     @Published var capturing = false
     @Published var control = false
     @Published var monitorsOff = false
+    @Published var hasVirtualDisplay = false
+    @Published var displayBusy = false
     @Published var message = "Starting server…"
     @Published var passkeys: [[String: Any]] = []
     @Published var host = ""
@@ -24,6 +26,7 @@ import CoreImage.CIFilterBuiltins
     var openScreenSettings: () -> Void = {}
     var requestControl: () -> Void = {}
     var createVirtual: () -> Void = {}
+    var removeVirtual: () -> Void = {}
     var restoreDisplays: () -> Void = {}
     var configure: () -> Void = {}
     var exportCertificate: () -> Void = {}
@@ -103,7 +106,10 @@ struct DashboardView: View {
                     .font(.system(size: 12)).foregroundStyle(.secondary)
                 Spacer()
                 if model.monitorsOff { Button("Restore displays", action: model.restoreDisplays) }
-                else { Button("Virtual display", action: model.createVirtual) }
+                else { Button("Virtual display", action: model.createVirtual).disabled(model.displayBusy) }
+                if model.hasVirtualDisplay {
+                    Button("Remove virtual display", action: model.removeVirtual).disabled(model.displayBusy)
+                }
             }
             if !model.message.isEmpty { Text(model.message).font(.system(size: 12)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
         }

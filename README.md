@@ -74,6 +74,8 @@ Credential databases belong to the configured DNS name. Changing the name requir
 
 In the browser, choose **Options → Create and use virtual display**. Check the image before choosing **Turn off Mac displays**. Restore them with **Turn on Mac displays** in the browser or **Restore displays** in the native app.
 
+Use **Remove virtual display** in the browser's Options or the native dashboard to remove the display created by MacWeb Remote. The app restores any displays it disabled and moves capture to another available screen before releasing its virtual display. If no replacement screen is available or restoration fails, removal is refused so remote access is preserved. Displays owned by Apple's Screen Sharing or other applications are not removed.
+
 The app prevents idle system sleep during capture and restores displays after thirty seconds without browser heartbeats. Display configuration changes are scoped to the process. Turning displays off is different from putting the Mac to sleep.
 
 Virtual displays and physical-display disabling use private macOS APIs that may change. App Store distribution has not been verified.

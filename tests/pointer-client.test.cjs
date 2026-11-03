@@ -29,7 +29,7 @@ function client(desktop = true) {
     pointerId:1, pointerType:'mouse', button:0, clientX:350, clientY:250,
     preventDefault() {}, ...overrides,
   });
-  return {context, dispatch, sent:context.sent};
+  return {context, dispatch, element, sent:context.sent};
 }
 
 test('mouse hover moves directly without holding a button in default mode',()=>{
@@ -82,4 +82,16 @@ test('touch capabilities select touch controls and adapt to a real mouse',()=>{
   assert.equal(vm.runInContext('document.documentElement.dataset.inputMode',context),'desktop');
   dispatch('pointerdown',{pointerType:'touch'});
   assert.equal(vm.runInContext('document.documentElement.dataset.inputMode',context),'touch');
+});
+
+
+test('remove virtual display is available only for a display owned by the app',async()=>{
+  const {context,element}=client();
+  vm.runInContext("api=async()=>({screenPermission:true,inputPermission:true,frames:1,displays:[],selectedDisplay:0,virtualDisplay:9,busy:false,frameBytes:0});",context);
+  await vm.runInContext('refresh()',context);
+  assert.equal(element('removeVirtual').hidden,false);
+  assert.equal(element('removeVirtual').disabled,false);
+  vm.runInContext("api=async()=>({screenPermission:true,inputPermission:true,frames:1,displays:[],selectedDisplay:0,virtualDisplay:0,busy:false,frameBytes:0});",context);
+  await vm.runInContext('refresh()',context);
+  assert.equal(element('removeVirtual').hidden,true);
 });

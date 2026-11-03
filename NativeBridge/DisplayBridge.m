@@ -56,6 +56,14 @@ typedef CGError (*ConfigureEnabled)(CGDisplayConfigRef, CGDirectDisplayID, bool)
     _display = candidate;
     return YES;
 }
+- (BOOL)removeWithError:(NSError **)error {
+    if (_disabled.count) return [self fail:error message:@"Restore physical displays before removing the virtual display."];
+#if !__has_feature(objc_arc)
+    [_display release];
+#endif
+    _display = nil;
+    return YES;
+}
 - (ConfigureEnabled)configureFunction {
     return (ConfigureEnabled)dlsym(RTLD_DEFAULT, "CGSConfigureDisplayEnabled");
 }

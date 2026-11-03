@@ -74,6 +74,8 @@ async function refresh() {
     $('display').value=String(state.selectedDisplay);
     $('display').disabled=state.busy || state.monitorsOff;
     $('virtual').disabled=state.busy || !state.screenPermission;
+    $('removeVirtual').hidden=!state.virtualDisplay;
+    $('removeVirtual').disabled=state.busy;
     $('monitors').disabled=state.busy || (!state.monitorsOff && (!state.virtualDisplay || state.selectedDisplay!==state.virtualDisplay));
     $('monitors').textContent=state.monitorsOff?'Turn on Mac displays':'Turn off Mac displays';
     $('details').textContent=state.frames+' frames captured · '+(state.frameBytes/1024).toFixed(0)+' KB per frame · local HTTPS';
@@ -110,6 +112,7 @@ async function change(path,value) {
 $('display').onchange=()=>change('display',{id:Number($('display').value)});
 $('quality').onchange=()=>change('quality',{quality:$('quality').value});
 $('virtual').onclick=async()=>{ $('virtual').disabled=true; await change('virtual',{}); };
+$('removeVirtual').onclick=async()=>{ $('removeVirtual').disabled=true; await change('virtual/remove',{}); };
 $('monitors').onclick=()=>change('monitors',{off:!state.monitorsOff});
 $('mode').onclick=()=>{
   mode=mode==='trackpad'?'touch':'trackpad';
